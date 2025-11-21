@@ -1,0 +1,19 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9095
+    properties:
+      security.protocol: SSL
+      ssl.truststore.location: certs/kafka.truststore.jks
+      ssl.truststore.password: confluent
+      ssl.keystore.location: certs/kafka.keystore.p12
+      ssl.keystore.password: confluent
+      ssl.key.password: confluent
+    consumer:
+      group-id: notification-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      properties:
+        schema.registry.url: http://localhost:8081
+server:
+  port: 8084
+debug: true
