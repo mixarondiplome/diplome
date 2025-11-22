@@ -64,7 +64,7 @@
 
                 <configuration>
                     <schemaRegistryUrls>
-                        <param>http://localhost:8081</param>
+                        <param>https://localhost:8081</param>
                     </schemaRegistryUrls>
 
                     <schemaDirectory>${project.basedir}</schemaDirectory>

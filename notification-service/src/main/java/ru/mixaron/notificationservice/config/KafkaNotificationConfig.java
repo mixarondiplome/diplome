@@ -57,9 +57,15 @@ public class KafkaNotificationConfig {
         configProps.put("ssl.keystore.location", keystoreLocation);
         configProps.put("ssl.keystore.password", keystorePassword);
         configProps.put("ssl.key.password", keyPassword);
+
+        configProps.put("ssl.keystore.type", "JKS");
+        configProps.put("ssl.truststore.type", "JKS");
+        configProps.put("schema.registry.ssl.truststore.location", truststoreLocation);
+        configProps.put("schema.registry.ssl.truststore.password", truststorePassword);
+        configProps.put("schema.registry.ssl.truststore.type", "JKS");
+
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         configProps.put("specific.avro.reader", "true");
-        configProps.put("ssl.endpoint.identification.algorithm", "");
 
 
         return new DefaultKafkaConsumerFactory<>(configProps);

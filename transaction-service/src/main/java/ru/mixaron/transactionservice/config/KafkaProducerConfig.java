@@ -57,7 +57,12 @@ public class KafkaProducerConfig {
         configProps.put("ssl.keystore.location", keystoreLocation);
         configProps.put("ssl.keystore.password", keystorePassword);
         configProps.put("ssl.key.password", keyPassword);
-        configProps.put("ssl.endpoint.identification.algorithm", "");
+        configProps.put("ssl.keystore.type", "JKS");
+        configProps.put("ssl.truststore.type", "JKS");
+        configProps.put("schema.registry.ssl.truststore.location", truststoreLocation);
+        configProps.put("schema.registry.ssl.truststore.password", truststorePassword);
+        configProps.put("schema.registry.ssl.truststore.type", "JKS");
+
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
