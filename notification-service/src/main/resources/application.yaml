@@ -8,6 +8,10 @@ spring:
       ssl.keystore.location: /app/certs/kafka.keystore.jks
       ssl.keystore.password: confluent
       ssl.key.password: confluent
+      schema.registry.url: https://schema-registry:8081
+      schema.registry.ssl.truststore.location: /app/certs/kafka.truststore.jks
+      schema.registry.ssl.truststore.password: confluent
+      schema.registry.ssl.truststore.type: JKS
     consumer:
       group-id: notification-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
