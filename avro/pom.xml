@@ -1,7 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -12,7 +12,6 @@
 
     <artifactId>avro-schemas</artifactId>
     <packaging>jar</packaging>
-
     <name>avro-schemas</name>
     <description>Shared Avro Schemas</description>
 
@@ -20,26 +19,23 @@
         <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
-            <version>1.11.1</version>
+            <version>1.11.3</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-
+            <!-- Только генерация Java-классов -->
             <plugin>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-maven-plugin</artifactId>
-                <version>1.11.1</version>
+                <version>1.11.3</version>
                 <executions>
                     <execution>
-                        <id>generate-avro</id>
                         <phase>generate-sources</phase>
-                        <goals>
-                            <goal>schema</goal>
-                        </goals>
+                        <goals><goal>schema</goal></goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}</sourceDirectory>
+                            <sourceDirectory>${project.basedir}/src/main/avro</sourceDirectory>
                             <outputDirectory>${project.build.directory}/generated-sources/avro</outputDirectory>
                             <stringType>String</stringType>
                         </configuration>
@@ -48,47 +44,13 @@
             </plugin>
 
             <plugin>
-                <groupId>io.confluent</groupId>
-                <artifactId>kafka-schema-registry-maven-plugin</artifactId>
-                <version>7.6.0</version>
-
-                <executions>
-                    <execution>
-                        <id>register</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>register</goal>
-                        </goals>
-                    </execution>
-                </executions>
-
-                <configuration>
-                    <schemaRegistryUrls>
-                        <param>https://localhost:8081</param>
-                    </schemaRegistryUrls>
-
-                    <schemaDirectory>${project.basedir}</schemaDirectory>
-                    <recursive>true</recursive>
-
-                    <autoRegisterSchemas>true</autoRegisterSchemas>
-
-                    <subjectSuffix>-value</subjectSuffix>
-                    <subjects>
-                        <TransactionEvent-value>TransactionEvent.avsc</TransactionEvent-value>
-                    </subjects>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
-                        <id>add-source</id>
                         <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
+                        <goals><goal>add-source</goal></goals>
                         <configuration>
                             <sources>
                                 <source>${project.build.directory}/generated-sources/avro</source>
@@ -99,5 +61,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

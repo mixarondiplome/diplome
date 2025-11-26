@@ -5,40 +5,124 @@ services:
     ports:
       - "9093:9093"
       - "9094:9094"
-      - "9095:9095"
     environment:
       KAFKA_PROCESS_ROLES: broker,controller
       CLUSTER_ID: yrx-T4_QQw-gXh_lmBp3SQ
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094
-      KAFKA_LISTENERS: SSL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094, SSL_INTERNAL://0.0.0.0:9095
-      KAFKA_ADVERTISED_LISTENERS: SSL://kafka:9093, SSL_INTERNAL://localhost:9095
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SSL:SSL,CONTROLLER:PLAINTEXT,SSL_INTERNAL:SSL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094,2@kafka-2:9094,3@kafka-3:9094
+      KAFKA_LISTENERS: SSL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: SSL://kafka:9093,CONTROLLER://kafka:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SSL:SSL,CONTROLLER:PLAINTEXT
+
       KAFKA_INTER_BROKER_LISTENER_NAME: SSL
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+
       KAFKA_SSL_KEYSTORE_FILENAME: kafka.keystore.jks
       KAFKA_SSL_KEYSTORE_TYPE: JKS
       KAFKA_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.keystore.jks
       KAFKA_SSL_KEY_CREDENTIALS: keystore_password.txt
       KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_password.txt
       KAFKA_SSL_TRUSTSTORE_CREDENTIALS: keystore_password.txt
+
       KAFKA_SSL_KEYSTORE_PASSWORD: confluent
       KAFKA_SSL_KEY_PASSWORD: confluent
+
       KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.truststore.jks
       KAFKA_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.truststore.jks
       KAFKA_SSL_TRUSTSTORE_PASSWORD: confluent
+
       KAFKA_SSL_CLIENT_AUTH: required
     volumes:
       - ./certs:/etc/kafka/secrets
+
+  kafka-2:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-2
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      CLUSTER_ID: yrx-T4_QQw-gXh_lmBp3SQ
+      KAFKA_NODE_ID: 2
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094,2@kafka-2:9094,3@kafka-3:9094
+      KAFKA_LISTENERS: SSL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: SSL://kafka-2:9093,CONTROLLER://kafka-2:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SSL:SSL,CONTROLLER:PLAINTEXT
+
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.keystore.jks
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.truststore.jks
+      KAFKA_SSL_KEYSTORE_TYPE: JKS
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: SSL
+
+      KAFKA_SSL_KEY_CREDENTIALS: keystore_password.txt
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_password.txt
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: keystore_password.txt
+
+      KAFKA_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.keystore.jks
+      KAFKA_SSL_KEYSTORE_PASSWORD: confluent
+      KAFKA_SSL_KEY_PASSWORD: confluent
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_PASSWORD: confluent
+      KAFKA_SSL_CLIENT_AUTH: required
+
+    volumes:
+      - ./certs:/etc/kafka/secrets
+
+  kafka-3:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-3
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      CLUSTER_ID: yrx-T4_QQw-gXh_lmBp3SQ
+      KAFKA_NODE_ID: 3
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094,2@kafka-2:9094,3@kafka-3:9094
+      KAFKA_LISTENERS: SSL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: SSL://kafka-3:9093,CONTROLLER://kafka-3:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SSL:SSL,CONTROLLER:PLAINTEXT
+
+      KAFKA_INTER_BROKER_LISTENER_NAME: SSL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.keystore.jks
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.truststore.jks
+      KAFKA_SSL_KEYSTORE_TYPE: JKS
+
+      KAFKA_SSL_KEY_CREDENTIALS: keystore_password.txt
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_password.txt
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: keystore_password.txt
+
+      KAFKA_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.keystore.jks
+      KAFKA_SSL_KEYSTORE_PASSWORD: confluent
+      KAFKA_SSL_KEY_PASSWORD: confluent
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_PASSWORD: confluent
+      KAFKA_SSL_CLIENT_AUTH: required
+
+    volumes:
+      - ./certs:/etc/kafka/secrets
+
+  create-topics:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - kafka
+      - kafka-2
+      - kafka-3
+    entrypoint: [
+      "bash","-c",
+      "sleep 12; /usr/bin/kafka-topics --create --topic transaction-events --partitions 8 --replication-factor 3 --config min.insync.replicas=2 --bootstrap-server kafka:9093,kafka-2:9093,kafka-3:9093 --command-config /etc/kafka/secrets/client-ssl.properties || true; echo 'topics created';"
+    ]
+    volumes:
+      - ./certs:/etc/kafka/secrets
+      - ./client-ssl.properties:/etc/kafka/secrets/client-ssl.properties
+    restart: "no"
 
   schema-registry:
     image: confluentinc/cp-schema-registry:latest
     container_name: schema-registry
     depends_on:
       - kafka
+      - create-topics
     ports:
       - "8081:8081"
     environment:
@@ -52,7 +136,7 @@ services:
       SCHEMA_REGISTRY_LISTENER_SCHEMES: https
       SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: https
 
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: SSL://kafka:9093
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: SSL://kafka:9093,SSL://kafka-2:9093,SSL://kafka-3:9093
       SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: SSL
       SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.truststore.jks
       SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_PASSWORD: confluent
@@ -81,8 +165,8 @@ services:
       dockerfile: transaction-service/Dockerfile
     container_name: transaction-service
     depends_on:
-      - kafka
       - schema-registry
+      - create-topics
     environment:
       SPRING_PROFILES_ACTIVE: docker
     volumes:
@@ -96,7 +180,7 @@ services:
       dockerfile: notification-service/Dockerfile
     container_name: notification-service
     depends_on:
-      - kafka
+      - create-topics
       - schema-registry
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -111,7 +195,7 @@ services:
       dockerfile: audit-service/Dockerfile
     container_name: audit-service
     depends_on:
-      - kafka
+      - create-topics
       - schema-registry
     environment:
       SPRING_PROFILES_ACTIVE: docker

@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "TransactionEvent",
+  "namespace": "com.example",
+  "fields": [
+    {"name": "id", "type": "long"},
+    {"name": "userId", "type": "long"},
+    {"name": "amount", "type": "double"},
+    {"name": "currency", "type": "string"},
+    {"name": "timestamp", "type": { "type": "long", "logicalType": "timestamp-millis"}},
+    {
+          "name": "category",
+          "type": ["null", "string"],
+          "default": null,
+          "doc": "Категория транзакции: TRANSFER, WITHDRAWAL, DEPOSIT и т.д."
+    }
+  ]
+}

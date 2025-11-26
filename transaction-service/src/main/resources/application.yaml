@@ -1,6 +1,6 @@
 spring:
   kafka:
-    bootstrap-servers: kafka:9093
+    bootstrap-servers: kafka:9093,kafka-2:9093,kafka-3:9093
     properties:
       security.protocol: SSL
       ssl.truststore.location: /app/certs/kafka.truststore.jks
@@ -9,9 +9,15 @@ spring:
       ssl.keystore.password: confluent
       ssl.key.password: confluent
     producer:
+      acks: all
+      retries: 2147483647
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 1
         schema.registry.url: https://schema-registry:8081
+        auto.register.schemas: true
+        use.latest.version: true
 server:
   port: 8083

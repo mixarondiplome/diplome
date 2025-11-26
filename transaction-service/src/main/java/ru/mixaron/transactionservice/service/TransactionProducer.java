@@ -16,13 +16,13 @@ public class TransactionProducer {
     }
     @Scheduled(fixedRate = 60000)
     public void sendPeriodicTransaction() {
-        TransactionEvent event = new TransactionEvent(
-                count++,
-                1L,
-                100.0,
-                "USD",
-                Instant.now()
-        );
+        TransactionEvent event = TransactionEvent.newBuilder()
+                .setId(count++)
+                .setUserId(1L)
+                .setAmount(100.0)
+                .setCurrency("USD")
+                .setTimestamp(Instant.now())
+                .build();
         kafkaTemplate.send("transaction-events", Long.toString(event.getId()), event);
         System.out.println("Sent transaction event: " + event);
     }
