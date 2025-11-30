@@ -1,161 +1,210 @@
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.5
+    container_name: keycloak
+    ports:
+      - "8443:8443"
+    command: start --optimized --import-realm
+    volumes:
+      - ./certs:/etc/certs:ro
+      - ./keycloak-import:/opt/keycloak/data/import:ro
+    environment:
+      KC_HOSTNAME: keycloak
+      KC_HOSTNAME_STRICT: "false"
+      KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_LEGACY_LOGOUT_REDIRECT_URI: "true"
+      KC_HTTPS_ENABLED: "true"
+      KC_HTTP_ENABLED: "false"
+      KC_HTTPS_PORT: "8443"
+      KC_HTTPS_CERTIFICATE_FILE: /etc/certs/kafka.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /etc/certs/kafka.key
+      KC_DB: dev-file
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      QUARKUS_HTTP_ACCESS_LOG_ENABLED: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "(echo > /dev/tcp/127.0.0.1/8443) >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  postgres:
+    image: postgres:15
+    container_name: audit-postgres
+    restart: always
+    volumes:
+      - audit_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: audit
+      POSTGRES_PASSWORD: audit
+      POSTGRES_DB: audit_db
+
   kafka:
-    image: confluentinc/cp-kafka:7.7.1
+    image: bitnamilegacy/kafka:3.7.1-debian-12-r9
     container_name: kafka
+    depends_on:
+      keycloak:
+        condition: service_healthy
     ports:
       - "9093:9093"
       - "9094:9094"
-    environment:
-      CLUSTER_ID: yrx-T4_QQw-gXh_lmBp3SQ
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094,2@kafka-2:9094,3@kafka-3:9094
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_LISTENERS: SASL_SSL://0.0.0.0:9093,INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094
-      KAFKA_ADVERTISED_LISTENERS: SASL_SSL://kafka:9093,INTERNAL://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SASL_SSL:SASL_SSL,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LOG4J_LOGGERS: "org.apache.kafka.common.security.oauthbearer.secured=DEBUG,org.apache.kafka.common.security.oauthbearer=DEBUG"
-      KAFKA_SSL_KEYSTORE_TYPE: JKS
-      KAFKA_SSL_KEYSTORE_FILENAME: kafka.keystore.jks
-      KAFKA_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.keystore.jks
-      KAFKA_SSL_KEYSTORE_PASSWORD: confluent
-      KAFKA_SSL_KEY_PASSWORD: confluent
-      KAFKA_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.truststore.jks
-      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.truststore.jks
-      KAFKA_SSL_TRUSTSTORE_PASSWORD: confluent
-      KAFKA_SSL_CLIENT_AUTH: required
-      KAFKA_SSL_KEY_CREDENTIALS: keystore_password.txt
-      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_password.txt
-      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: keystore_password.txt
-      KAFKA_OPTS: >
-        -Djavax.net.ssl.keyStore=/etc/kafka/secrets/kafka.keystore.jks
-        -Djavax.net.ssl.keyStorePassword=confluent
-        -Djavax.net.ssl.keyPassword=confluent
-        -Djavax.net.ssl.trustStore=/etc/kafka/secrets/kafka.truststore.jks
-        -Djavax.net.ssl.trustStorePassword=confluent
-        -Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf
-
-      KAFKA_SASL_ENABLED_MECHANISMS: OAUTHBEARER
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_MECHANISM: OAUTHBEARER
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_ENABLED_MECHANISMS: OAUTHBEARER
-      KAFKA_NUM_PARTITIONS: 3
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_LOGIN_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
-
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_OAUTHBEARER_JWKS_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/certs
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/token
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_OAUTHBEARER_EXPECTED_ISSUER: https://keycloak:8443/realms/banking-realm
-
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_OAUTHBEARER_CLOCK_SKEW_MS: 3000
-
     volumes:
-      - ./certs:/etc/kafka/secrets
-      - ./jaas/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
+      - ./certs:/opt/bitnami/kafka/config/certs:ro
+      - ./jaas/kafka_server_jaas.conf:/opt/bitnami/kafka/config/kafka_jaas.conf:ro
+    environment:
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_KRAFT_CLUSTER_ID: yrx-T4_QQw-gXh_lmBp3SQ
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9094,2@kafka-2:9094,3@kafka-3:9094"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "SASL_SSL:SASL_SSL,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CFG_LISTENERS: "SASL_SSL://0.0.0.0:9093,INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "SASL_SSL://kafka:9093,INTERNAL://kafka:9092"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_CFG_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: "https"
+      KAFKA_CFG_SSL_KEYSTORE_TYPE: JKS
+      KAFKA_CFG_SSL_KEYSTORE_LOCATION: /opt/bitnami/kafka/config/certs/kafka.keystore.jks
+      KAFKA_CFG_SSL_KEYSTORE_PASSWORD: confluent
+      KAFKA_CFG_SSL_KEY_PASSWORD: confluent
+      KAFKA_CFG_SSL_TRUSTSTORE_LOCATION: /opt/bitnami/kafka/config/certs/kafka.truststore.jks
+      KAFKA_CFG_SSL_TRUSTSTORE_PASSWORD: confluent
+
+      KAFKA_CFG_SSL_CLIENT_AUTH: none
+
+      KAFKA_CFG_SASL_ENABLED_MECHANISMS: OAUTHBEARER
+      KAFKA_CFG_LISTENER_NAME_SASL_SSL_SASL_MECHANISM: OAUTHBEARER
+      KAFKA_CFG_LISTENER_NAME_SASL_SSL_SASL_ENABLED_MECHANISMS: OAUTHBEARER
+
+      KAFKA_CFG_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
+      KAFKA_CFG_LISTENER_NAME_SASL_SSL_OAUTHBEARER_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
+
+      KAFKA_CFG_SASL_OAUTHBEARER_JWKS_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/certs
+      KAFKA_CFG_SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/token
+      KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_ISSUER: https://keycloak:8443/realms/banking-realm
+      KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_AUDIENCE: kafka-broker
+
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/bitnami/kafka/config/kafka_jaas.conf -Djavax.net.ssl.trustStore=/opt/bitnami/kafka/config/certs/kafka.truststore.jks -Djavax.net.ssl.trustStorePassword=confluent -Djdk.internal.httpclient.disableHostnameVerification=true"
+      KAFKA_CFG_LOG4J_LOGGERS: "org.apache.kafka.common.security.oauthbearer.secured=DEBUG,org.apache.kafka.common.security.oauthbearer=DEBUG"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
 
   kafka-2:
-    image: confluentinc/cp-kafka:7.7.1
+    image: bitnamilegacy/kafka:3.7.1-debian-12-r9
     container_name: kafka-2
-    environment:
-      KAFKA_NODE_ID: 2
-      CLUSTER_ID: yrx-T4_QQw-gXh_lmBp3SQ
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094,2@kafka-2:9094,3@kafka-3:9094
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_LISTENERS: SASL_SSL://0.0.0.0:9093,INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SASL_SSL:SASL_SSL,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_OPTS: >
-        -Djavax.net.ssl.keyStore=/etc/kafka/secrets/kafka.keystore.jks
-        -Djavax.net.ssl.keyStorePassword=confluent
-        -Djavax.net.ssl.keyPassword=confluent
-        -Djavax.net.ssl.trustStore=/etc/kafka/secrets/kafka.truststore.jks
-        -Djavax.net.ssl.trustStorePassword=confluent
-        -Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf
-
-      KAFKA_SSL_KEYSTORE_TYPE: JKS
-      KAFKA_SSL_KEYSTORE_FILENAME: kafka.keystore.jks
-      KAFKA_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.keystore.jks
-      KAFKA_SSL_KEYSTORE_PASSWORD: confluent
-      KAFKA_SSL_KEY_PASSWORD: confluent
-      KAFKA_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.truststore.jks
-      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.truststore.jks
-      KAFKA_SSL_TRUSTSTORE_PASSWORD: confluent
-      KAFKA_SSL_CLIENT_AUTH: required
-      KAFKA_SSL_KEY_CREDENTIALS: keystore_password.txt
-      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_password.txt
-      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: keystore_password.txt
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_ENABLED_MECHANISMS: OAUTHBEARER
-      KAFKA_SASL_ENABLED_MECHANISMS: OAUTHBEARER
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_MECHANISM: OAUTHBEARER
-      KAFKA_ADVERTISED_LISTENERS: SASL_SSL://kafka-2:9093,INTERNAL://kafka-2:9092
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_LOGIN_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
-
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_OAUTHBEARER_JWKS_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/certs
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_OAUTHBEARER_EXPECTED_ISSUER: https://keycloak:8443/realms/banking-realm
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/token
+    depends_on:
+      - kafka
     volumes:
-      - ./certs:/etc/kafka/secrets
-      - ./jaas/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
+      - ./certs:/opt/bitnami/kafka/config/certs:ro
+      - ./jaas/kafka_server_jaas.conf:/opt/bitnami/kafka/config/kafka_jaas.conf:ro
+    environment:
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_KRAFT_CLUSTER_ID: yrx-T4_QQw-gXh_lmBp3SQ
+      KAFKA_CFG_NODE_ID: 2
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9094,2@kafka-2:9094,3@kafka-3:9094"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "SASL_SSL:SASL_SSL,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CFG_LISTENERS: "SASL_SSL://0.0.0.0:9093,INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "SASL_SSL://kafka-2:9093,INTERNAL://kafka-2:9092"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_CFG_SSL_KEYSTORE_TYPE: JKS
+      KAFKA_CFG_SSL_KEYSTORE_LOCATION: /opt/bitnami/kafka/config/certs/kafka.keystore.jks
+      KAFKA_CFG_SSL_KEYSTORE_PASSWORD: confluent
+      KAFKA_CFG_SSL_KEY_PASSWORD: confluent
+      KAFKA_CFG_SSL_TRUSTSTORE_LOCATION: /opt/bitnami/kafka/config/certs/kafka.truststore.jks
+      KAFKA_CFG_SSL_TRUSTSTORE_PASSWORD: confluent
+
+      KAFKA_CFG_SSL_CLIENT_AUTH: none
+      KAFKA_CFG_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: "https"
+
+      KAFKA_CFG_SASL_ENABLED_MECHANISMS: OAUTHBEARER
+      KAFKA_CFG_LISTENER_NAME_SASL_SSL_SASL_MECHANISM: OAUTHBEARER
+      KAFKA_CFG_LISTENER_NAME_SASL_SSL_SASL_ENABLED_MECHANISMS: OAUTHBEARER
+
+      KAFKA_CFG_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
+      KAFKA_CFG_LISTENER_NAME_SASL_SSL_OAUTHBEARER_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
+
+      KAFKA_CFG_SASL_OAUTHBEARER_JWKS_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/certs
+      KAFKA_CFG_SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/token
+      KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_ISSUER: https://keycloak:8443/realms/banking-realm
+      KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_AUDIENCE: kafka-broker
+
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/bitnami/kafka/config/kafka_jaas.conf -Djavax.net.ssl.trustStore=/opt/bitnami/kafka/config/certs/kafka.truststore.jks -Djavax.net.ssl.trustStorePassword=confluent -Djdk.internal.httpclient.disableHostnameVerification=true"
+      KAFKA_CFG_LOG4J_LOGGERS: "org.apache.kafka.common.security.oauthbearer.secured=DEBUG,org.apache.kafka.common.security.oauthbearer=DEBUG"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
 
   kafka-3:
-    image: confluentinc/cp-kafka:7.7.1
+    image: bitnamilegacy/kafka:3.7.1-debian-12-r9
     container_name: kafka-3
-    environment:
-      KAFKA_NODE_ID: 3
-      KAFKA_ADVERTISED_LISTENERS: SASL_SSL://kafka-3:9093,INTERNAL://kafka-3:9092
-      CLUSTER_ID: yrx-T4_QQw-gXh_lmBp3SQ
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094,2@kafka-2:9094,3@kafka-3:9094
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_LISTENERS: SASL_SSL://0.0.0.0:9093,INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SASL_SSL:SASL_SSL,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_OPTS: >
-        -Djavax.net.ssl.keyStore=/etc/kafka/secrets/kafka.keystore.jks
-        -Djavax.net.ssl.keyStorePassword=confluent
-        -Djavax.net.ssl.keyPassword=confluent
-        -Djavax.net.ssl.trustStore=/etc/kafka/secrets/kafka.truststore.jks
-        -Djavax.net.ssl.trustStorePassword=confluent
-        -Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf
-
-      KAFKA_SSL_KEYSTORE_TYPE: JKS
-      KAFKA_SSL_KEYSTORE_FILENAME: kafka.keystore.jks
-      KAFKA_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.keystore.jks
-      KAFKA_SSL_KEYSTORE_PASSWORD: confluent
-      KAFKA_SSL_KEY_PASSWORD: confluent
-      KAFKA_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.truststore.jks
-      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.truststore.jks
-      KAFKA_SSL_TRUSTSTORE_PASSWORD: confluent
-      KAFKA_SSL_CLIENT_AUTH: required
-      KAFKA_SSL_KEY_CREDENTIALS: keystore_password.txt
-      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_password.txt
-      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: keystore_password.txt
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_ENABLED_MECHANISMS: OAUTHBEARER
-      KAFKA_SASL_ENABLED_MECHANISMS: OAUTHBEARER
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_MECHANISM: OAUTHBEARER
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_LOGIN_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
-
-
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_OAUTHBEARER_JWKS_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/certs
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_OAUTHBEARER_EXPECTED_ISSUER: https://keycloak:8443/realms/banking-realm
-      KAFKA_LISTENER_NAME_SASL_SSL_SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/token
+    depends_on:
+      - kafka
     volumes:
-      - ./certs:/etc/kafka/secrets
-      - ./jaas/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
+      - ./certs:/opt/bitnami/kafka/config/certs:ro
+      - ./jaas/kafka_server_jaas.conf:/opt/bitnami/kafka/config/kafka_jaas.conf:ro
+    environment:
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_KRAFT_CLUSTER_ID: yrx-T4_QQw-gXh_lmBp3SQ
+      KAFKA_CFG_NODE_ID: 3
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9094,2@kafka-2:9094,3@kafka-3:9094"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "SASL_SSL:SASL_SSL,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CFG_LISTENERS: "SASL_SSL://0.0.0.0:9093,INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "SASL_SSL://kafka-3:9093,INTERNAL://kafka-3:9092"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_CFG_SSL_KEYSTORE_TYPE: JKS
+      KAFKA_CFG_SSL_KEYSTORE_LOCATION: /opt/bitnami/kafka/config/certs/kafka.keystore.jks
+      KAFKA_CFG_SSL_KEYSTORE_PASSWORD: confluent
+      KAFKA_CFG_SSL_KEY_PASSWORD: confluent
+      KAFKA_CFG_SSL_TRUSTSTORE_LOCATION: /opt/bitnami/kafka/config/certs/kafka.truststore.jks
+      KAFKA_CFG_SSL_TRUSTSTORE_PASSWORD: confluent
+
+      KAFKA_CFG_SSL_CLIENT_AUTH: none
+      KAFKA_CFG_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: "https"
+
+      KAFKA_CFG_SASL_ENABLED_MECHANISMS: OAUTHBEARER
+      KAFKA_CFG_LISTENER_NAME_SASL_SSL_SASL_MECHANISM: OAUTHBEARER
+      KAFKA_CFG_LISTENER_NAME_SASL_SSL_SASL_ENABLED_MECHANISMS: OAUTHBEARER
+
+      KAFKA_CFG_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
+      KAFKA_CFG_LISTENER_NAME_SASL_SSL_OAUTHBEARER_SASL_SERVER_CALLBACK_HANDLER_CLASS: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerValidatorCallbackHandler
+
+      KAFKA_CFG_SASL_OAUTHBEARER_JWKS_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/certs
+      KAFKA_CFG_SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/token
+      KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_ISSUER: https://keycloak:8443/realms/banking-realm
+      KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_AUDIENCE: kafka-broker
+
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/bitnami/kafka/config/kafka_jaas.conf -Djavax.net.ssl.trustStore=/opt/bitnami/kafka/config/certs/kafka.truststore.jks -Djavax.net.ssl.trustStorePassword=confluent -Djdk.internal.httpclient.disableHostnameVerification=true"
+      KAFKA_CFG_LOG4J_LOGGERS: "org.apache.kafka.common.security.oauthbearer.secured=DEBUG,org.apache.kafka.common.security.oauthbearer=DEBUG"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
 
   create-topics:
     image: confluentinc/cp-kafka:7.7.1
     depends_on:
-      - kafka
-      - kafka-2
-      - kafka-3
+      kafka:
+        condition: service_healthy
     entrypoint: [
       "bash","-c",
       "sleep 12; /usr/bin/kafka-topics --create --topic transaction-events --partitions 8 --replication-factor 3 --config min.insync.replicas=2 --bootstrap-server kafka:9092,kafka-2:9092,kafka-3:9092  /etc/kafka/secrets/client-ssl.properties || true; echo 'topics created';"
@@ -164,14 +213,17 @@ services:
       - ./certs:/etc/kafka/secrets
       - ./kafka/client-ssl.properties:/etc/kafka/secrets/client-ssl.properties
     restart: "no"
+
   schema-registry:
     image: confluentinc/cp-schema-registry:7.7.1
     container_name: schema-registry
     depends_on:
-      - kafka
-      - keycloak
+      kafka:
+        condition: service_healthy
     ports:
       - "8081:8081"
+    volumes:
+      - ./certs:/etc/kafka/secrets:ro
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_LISTENERS: https://0.0.0.0:8081
@@ -198,64 +250,58 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_SASL_JAAS_CONFIG: |
         org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required \
           clientId="schema-service" \
-          clientSecret="pBVlCdsLLPrwaoXid8NvlXqAqfW7AkKg" \
+          clientSecret="**********" \
           scope="email";
 
       JAVA_TOOL_OPTIONS: >
         -Djavax.net.ssl.trustStore=/etc/kafka/secrets/kafka.truststore.jks
         -Djavax.net.ssl.trustStorePassword=confluent
-
-    volumes:
-      - ./certs:/etc/kafka/secrets:ro
-
-  postgres:
-    image: postgres:15
-    container_name: audit-postgres
-    restart: always
-    ports:
-      - "5435:5432"
-    environment:
-      POSTGRES_USER: audit
-      POSTGRES_PASSWORD: audit
-      POSTGRES_DB: audit_db
-    volumes:
-      - audit_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -k -f https://localhost:8081/subjects || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   transaction-service:
+    container_name: transaction-service
     build:
       context: .
       dockerfile: transaction-service/Dockerfile
-    container_name: transaction-service
     depends_on:
-      - create-topics
+      schema-registry:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./certs:/app/certs
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093,kafka-2:9093,kafka-3:9093
       JAVA_TOOL_OPTIONS: >
         -Djavax.net.ssl.trustStore=/app/certs/kafka.truststore.jks
         -Djavax.net.ssl.trustStorePassword=confluent
-    volumes:
-      - ./certs:/app/certs
-    ports:
-      - "8083:8083"
 
   notification-service:
+    container_name: notification-service
     build:
       context: .
       dockerfile: notification-service/Dockerfile
-    container_name: notification-service
     depends_on:
-      - create-topics
+      schema-registry:
+        condition: service_healthy
+    ports:
+      - "8084:8084"
+    volumes:
+      - ./certs:/app/certs
     environment:
       SPRING_PROFILES_ACTIVE:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093,kafka-2:9093,kafka-3:9093
       JAVA_TOOL_OPTIONS: >
         -Djavax.net.ssl.trustStore=/app/certs/kafka.truststore.jks
         -Djavax.net.ssl.trustStorePassword=confluent
-    volumes:
-      - ./certs:/app/certs
-    ports:
-      - "8084:8084"
+    
+    
 
   audit-service:
     build:
@@ -263,41 +309,18 @@ services:
       dockerfile: audit-service/Dockerfile
     container_name: audit-service
     depends_on:
-      - create-topics
+      schema-registry:
+        condition: service_healthy
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./certs:/app/certs
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093,kafka-2:9093,kafka-3:9093
       JAVA_TOOL_OPTIONS: >
         -Djavax.net.ssl.trustStore=/app/certs/kafka.truststore.jks
         -Djavax.net.ssl.trustStorePassword=confluent
-    volumes:
-      - ./certs:/app/certs
-    ports:
-      - "8085:8085"
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:23.0.5
-    container_name: keycloak
-    command: start --optimized --import-realm
-    environment:
-      KC_HOSTNAME: keycloak
-      KC_HOSTNAME_STRICT: "false"
-      KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_LEGACY_LOGOUT_REDIRECT_URI: "true"
-      KC_HTTPS_ENABLED: "true"
-      KC_HTTP_ENABLED: "false"
-      KC_HTTPS_PORT: "8443"
-      KC_HTTPS_CERTIFICATE_FILE: /etc/certs/kafka.crt
-      KC_HTTPS_CERTIFICATE_KEY_FILE: /etc/certs/kafka.key
-      KC_DB: dev-file
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-
-    ports:
-      - "8443:8443"
-
-    volumes:
-      - ./certs:/etc/certs:ro
-      - ./keycloak-import:/opt/keycloak/data/import:ro
 
 volumes:
   audit_data:
