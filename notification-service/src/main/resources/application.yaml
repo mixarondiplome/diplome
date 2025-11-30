@@ -5,7 +5,7 @@ spring:
       security.protocol: SASL_SSL
       sasl.mechanism: OAUTHBEARER
       sasl.oauthbearer.token.endpoint.url: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/token
-      sasl.jaas.config: 'org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="notification-service" clientSecret="oHVREZ3qX3yoQXF8IsnP0EQCwuXOY2mB" scope="email";'
+      sasl.jaas.config: 'org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="notification-service" clientSecret="**********" scope="email";'
       sasl.login.callback.handler.class: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
       ssl.truststore.location: /app/certs/kafka.truststore.jks
       ssl.truststore.password: confluent
