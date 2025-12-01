@@ -297,6 +297,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093,kafka-2:9093,kafka-3:9093
+      SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET: earliest
       JAVA_TOOL_OPTIONS: >
         -Djavax.net.ssl.trustStore=/app/certs/kafka.truststore.jks
         -Djavax.net.ssl.trustStorePassword=confluent
@@ -318,6 +319,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093,kafka-2:9093,kafka-3:9093
+      SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET: earliest
       JAVA_TOOL_OPTIONS: >
         -Djavax.net.ssl.trustStore=/app/certs/kafka.truststore.jks
         -Djavax.net.ssl.trustStorePassword=confluent
