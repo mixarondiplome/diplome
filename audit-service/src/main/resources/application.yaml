@@ -12,7 +12,6 @@ spring:
       ssl.keystore.location: /app/certs/kafka.keystore.jks
       ssl.keystore.password: confluent
       ssl.key.password: confluent
-      ssl.endpoint.identification.algorithm: ""
       schema.registry.url: https://schema-registry:8081
       schema.registry.ssl.truststore.location: /app/certs/kafka.truststore.jks
       schema.registry.ssl.truststore.password: confluent
