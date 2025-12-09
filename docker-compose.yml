@@ -87,7 +87,7 @@ services:
       KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_ISSUER: https://keycloak:8443/realms/banking-realm
       KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_AUDIENCE: kafka-broker
 
-      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/bitnami/kafka/config/kafka_jaas.conf -Djavax.net.ssl.trustStore=/opt/bitnami/kafka/config/certs/kafka.truststore.jks -Djavax.net.ssl.trustStorePassword=confluent -Djdk.internal.httpclient.disableHostnameVerification=true"
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/bitnami/kafka/config/kafka_jaas.conf -Djavax.net.ssl.trustStore=/opt/bitnami/kafka/config/certs/kafka.truststore.jks -Djavax.net.ssl.trustStorePassword=confluent"
       KAFKA_CFG_LOG4J_LOGGERS: "org.apache.kafka.common.security.oauthbearer.secured=DEBUG,org.apache.kafka.common.security.oauthbearer=DEBUG"
     healthcheck:
       test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092 || exit 1"]
@@ -139,7 +139,7 @@ services:
       KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_ISSUER: https://keycloak:8443/realms/banking-realm
       KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_AUDIENCE: kafka-broker
 
-      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/bitnami/kafka/config/kafka_jaas.conf -Djavax.net.ssl.trustStore=/opt/bitnami/kafka/config/certs/kafka.truststore.jks -Djavax.net.ssl.trustStorePassword=confluent -Djdk.internal.httpclient.disableHostnameVerification=true"
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/bitnami/kafka/config/kafka_jaas.conf -Djavax.net.ssl.trustStore=/opt/bitnami/kafka/config/certs/kafka.truststore.jks -Djavax.net.ssl.trustStorePassword=confluent"
       KAFKA_CFG_LOG4J_LOGGERS: "org.apache.kafka.common.security.oauthbearer.secured=DEBUG,org.apache.kafka.common.security.oauthbearer=DEBUG"
     healthcheck:
       test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092 || exit 1"]
@@ -191,7 +191,7 @@ services:
       KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_ISSUER: https://keycloak:8443/realms/banking-realm
       KAFKA_CFG_SASL_OAUTHBEARER_EXPECTED_AUDIENCE: kafka-broker
 
-      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/bitnami/kafka/config/kafka_jaas.conf -Djavax.net.ssl.trustStore=/opt/bitnami/kafka/config/certs/kafka.truststore.jks -Djavax.net.ssl.trustStorePassword=confluent -Djdk.internal.httpclient.disableHostnameVerification=true"
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/bitnami/kafka/config/kafka_jaas.conf -Djavax.net.ssl.trustStore=/opt/bitnami/kafka/config/certs/kafka.truststore.jks -Djavax.net.ssl.trustStorePassword=confluent"
       KAFKA_CFG_LOG4J_LOGGERS: "org.apache.kafka.common.security.oauthbearer.secured=DEBUG,org.apache.kafka.common.security.oauthbearer=DEBUG"
     healthcheck:
       test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092 || exit 1"]
