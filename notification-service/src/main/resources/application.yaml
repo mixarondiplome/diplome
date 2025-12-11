@@ -19,8 +19,10 @@ spring:
     consumer:
       group-id: notification-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
+        spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+        spring.deserializer.value.failOnDeserialization: true
         schema.registry.url: https://schema-registry:8081
         specific.avro.reader: true
         use.latest.version: true
