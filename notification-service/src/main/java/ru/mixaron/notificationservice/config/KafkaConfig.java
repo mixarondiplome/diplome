@@ -4,6 +4,8 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +22,8 @@ import java.util.Map;
 
 @Configuration
 public class KafkaConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(KafkaConfig.class);
 
     @Bean
     public CommonErrorHandler errorHandler(KafkaProperties properties) {
@@ -38,7 +42,11 @@ public class KafkaConfig {
         KafkaTemplate<Object, Object> dltTemplate = new KafkaTemplate<>(dltProducerFactory);
 
         return new DeadLetterPublishingRecoverer(dltTemplate,
-                (record, ex) -> new TopicPartition(record.topic() + ".notification.DLT", record.partition()));
+                (record, ex) -> {
+                    log.error("POISON PILL DETECTED! Topic: {}, Partition: {}, Offset: {}. Exception: {}. Sending to DLT...",
+                            record.topic(), record.partition(), record.offset(), ex.getMessage());
+                    return new TopicPartition(record.topic() + ".notification.DLT", record.partition());
+                });
     }
 
     @Bean
