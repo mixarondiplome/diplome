@@ -207,7 +207,10 @@ services:
         condition: service_healthy
     entrypoint: [
       "bash","-c",
-      "sleep 12; /usr/bin/kafka-topics --create --topic transaction-events --partitions 8 --replication-factor 3 --config min.insync.replicas=2 --bootstrap-server kafka:9092,kafka-2:9092,kafka-3:9092  /etc/kafka/secrets/client-ssl.properties || true; echo 'topics created';"
+      "sleep 12;
+       /usr/bin/kafka-topics --create --topic transaction-events --partitions 8 --replication-factor 3 --config min.insync.replicas=2 --bootstrap-server kafka:9092,kafka-2:9092,kafka-3:9092  /etc/kafka/secrets/client-ssl.properties || true;
+       /usr/bin/kafka-topics --create --topic transaction-events.DLT --partitions 8 --replication-factor 3 --config min.insync.replicas=2 --bootstrap-server kafka:9092,kafka-2:9092,kafka-3:9092 /etc/kafka/secrets/client-ssl.properties || true; 
+       echo 'topics created';"
     ]
     volumes:
       - ./certs:/etc/kafka/secrets
