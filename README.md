@@ -20,6 +20,9 @@ Keycloak и Spring Boot.
 с использованием **Avro** и **Schema Registry**.
 Client -> transaction-service -> Kafka -> audit-service, notification-service
 
+В случае ошибок десериализации (битые сообщения) данные перенаправляются в **Dead Letter Topic**:
+`[Error] -> Kafka [Topic: *.DLT]`
+
 ## Стек
 
 - Java 21
