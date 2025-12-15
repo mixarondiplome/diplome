@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 @Entity
-@Table(name = "audit_logs")
+@Table(name = "audit_logs", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "event_id")
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,6 +22,7 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long eventId;
     private Long userId;
     private Double amount;
     private String currency;

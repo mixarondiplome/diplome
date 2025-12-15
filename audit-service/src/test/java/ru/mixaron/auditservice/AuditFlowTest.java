@@ -30,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
-@RequiredArgsConstructor
 public class AuditFlowTest extends AuditServiceIntegrationTest {
 
     @Autowired
@@ -96,5 +95,22 @@ public class AuditFlowTest extends AuditServiceIntegrationTest {
         dltConsumer.close();
 
         assertEquals(0, auditRepository.count());
+    }
+
+    @Test
+    void shouldSaveOnceWhenSendDuplicates() {
+        TransactionEvent event = createTransactionEvent(1L, 1L);
+
+        kafkaTemplate.send("transaction-events", event);
+        kafkaTemplate.send("transaction-events", event);
+
+        await()
+                .pollInterval(Duration.ofSeconds(1))
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    var records = auditRepository.findAll();
+                    assertEquals(1, records.size());
+                    assertEquals(1L, records.getFirst().getUserId());
+                });
     }
 }

@@ -7,12 +7,12 @@ import ru.mixaron.auditservice.model.AuditLog;
 @Component
 public class AuditMapper {
     public AuditLog toLog(TransactionEvent event) {
-        AuditLog log = AuditLog.builder()
+        return AuditLog.builder()
                 .userId(event.getUserId())
+                .eventId(event.getId())
                 .amount(event.getAmount())
                 .currency(event.getCurrency())
                 .createdAt(event.getTimestamp())
                 .build();
-        return log;
     }
 }
