@@ -27,6 +27,19 @@ spring:
         specific.avro.reader: true
         use.latest.version: true
         auto.register.schemas: false
+        session.timeout.ms: 10000
+        heartbeat.interval.ms: 3000
+        metadata.max.age.ms: 5000
+  security:
+    user:
+      name: demo
+      password: demo123
+      roles: USER
 server:
   port: 8084
+  servlet:
+    session:
+      cookie:
+        name: "NOTIFICATION_SESSION"
+
 debug: true

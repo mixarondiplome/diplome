@@ -27,6 +27,7 @@ spring:
         specific.avro.reader: true
         use.latest.version: true
         auto.register.schemas: false
+#        isolation-level: read_committed
   datasource:
     url: jdbc:postgresql://postgres:5432/audit_db
     username: audit

@@ -5,7 +5,7 @@
 <modelVersion>4.0.0</modelVersion>
 
 <groupId>ru.mixaron</groupId>
-<artifactId>bank_microservices_without_security</artifactId>
+<artifactId>diplom_microservices</artifactId>
 <version>0.0.1-SNAPSHOT</version>
 <packaging>pom</packaging>
 

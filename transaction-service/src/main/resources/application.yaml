@@ -18,14 +18,28 @@ spring:
       schema.registry.ssl.truststore.type: JKS
     producer:
       acks: all
-      retries: 2147483647
+      retries: 5
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       properties:
+        retry.backoff.ms: 1000
         enable.idempotence: true
         max.in.flight.requests.per.connection: 1
         schema.registry.url: https://schema-registry:8081
+        schema.registry.retry.attempts: 10
+        schema.registry.retry.backoff.ms: 1000
         auto.register.schemas: true
         use.latest.version: true
+        delivery.timeout.ms: 15000
+        request.timeout.ms: 5000
+  security:
+    user:
+      name: demo
+      password: demo123
+      roles: USER
 server:
   port: 8083
+  servlet:
+    session:
+      cookie:
+        name: "TRANSACTION_SESSION"

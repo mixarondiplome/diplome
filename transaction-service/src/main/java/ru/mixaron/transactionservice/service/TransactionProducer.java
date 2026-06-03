@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import ru.mixaron.transactionservice.dto.TransactionDTO;
 
 import java.time.Instant;
 
@@ -13,22 +14,23 @@ import java.time.Instant;
 public class TransactionProducer {
 
     private final static Logger logger = LoggerFactory.getLogger(TransactionProducer.class);
-
+    private final static String TOPIC = "transaction-events";
     private final KafkaTemplate<String, TransactionEvent> kafkaTemplate;
     private long count = 1L;
+
     public TransactionProducer(KafkaTemplate<String, TransactionEvent> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
-    @Scheduled(fixedRate = 60000)
-    public void sendPeriodicTransaction() {
+
+    public void sendPeriodicTransaction(TransactionDTO request) {
         TransactionEvent event = TransactionEvent.newBuilder()
                 .setId(count++)
-                .setUserId(1L)
-                .setAmount(100.0)
-                .setCurrency("USD")
+                .setUserId(request.getUserId())
+                .setAmount(request.getAmount())
+                .setCurrency(request.getCurrency())
                 .setTimestamp(Instant.now())
                 .build();
-        kafkaTemplate.send("transaction-events", Long.toString(event.getId()), event);
+        kafkaTemplate.send(TOPIC, Long.toString(event.getId()), event);
         logger.info("Sent transaction event: {}", event);
     }
 }
