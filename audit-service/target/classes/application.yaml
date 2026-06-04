@@ -1,0 +1,44 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka:9093,kafka-2:9093,kafka-3:9093
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: OAUTHBEARER
+      sasl.oauthbearer.token.endpoint.url: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/token
+      sasl.jaas.config: 'org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="audit-service" clientSecret="**********" scope="email";'
+      sasl.login.callback.handler.class: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
+      ssl.truststore.location: /app/certs/kafka.truststore.jks
+      ssl.truststore.password: confluent
+      ssl.keystore.location: /app/certs/kafka.keystore.jks
+      ssl.keystore.password: confluent
+      ssl.key.password: confluent
+      schema.registry.url: https://schema-registry:8081
+      schema.registry.ssl.truststore.location: /app/certs/kafka.truststore.jks
+      schema.registry.ssl.truststore.password: confluent
+      schema.registry.ssl.truststore.type: JKS
+    consumer:
+      group-id: audit-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+        spring.deserializer.value.failOnDeserialization: true
+        schema.registry.url: https://schema-registry:8081
+        specific.avro.reader: true
+        use.latest.version: true
+        auto.register.schemas: false
+#        isolation-level: read_committed
+  datasource:
+    url: jdbc:postgresql://postgres:5432/audit_db
+    username: audit
+    password: audit
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+
+server:
+  port: 8085
+debug: true

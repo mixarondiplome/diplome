@@ -1,0 +1,6 @@
+D:\porjects\bank_microservices_without_security\audit-service\src\main\java\ru\mixaron\auditservice\AuditServiceApplication.java
+D:\porjects\bank_microservices_without_security\audit-service\src\main\java\ru\mixaron\auditservice\config\KafkaConfig.java
+D:\porjects\bank_microservices_without_security\audit-service\src\main\java\ru\mixaron\auditservice\mapper\AuditMapper.java
+D:\porjects\bank_microservices_without_security\audit-service\src\main\java\ru\mixaron\auditservice\model\AuditLog.java
+D:\porjects\bank_microservices_without_security\audit-service\src\main\java\ru\mixaron\auditservice\repository\AuditRepository.java
+D:\porjects\bank_microservices_without_security\audit-service\src\main\java\ru\mixaron\auditservice\service\AuditService.java

@@ -1,0 +1,9 @@
+ru\mixaron\notificationservice\controller\LoginController.class
+ru\mixaron\notificationservice\controller\NotificationApiController.class
+ru\mixaron\notificationservice\controller\NotificationController.class
+ru\mixaron\notificationservice\config\KafkaConfig.class
+ru\mixaron\notificationservice\config\SecurityConfig.class
+ru\mixaron\notificationservice\service\NotificationStorageService.class
+ru\mixaron\notificationservice\dto\NotificationMessage.class
+ru\mixaron\notificationservice\NotificationServiceApplication.class
+ru\mixaron\notificationservice\service\NotificationConsumer.class

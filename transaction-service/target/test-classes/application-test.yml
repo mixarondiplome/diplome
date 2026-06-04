@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: transaction-service-test
+  kafka:
+    properties:
+      security.protocol: PLAINTEXT
+      sasl.mechanism: ""
+      sasl.jaas.config: ""
+
+      ssl.truststore.location: ""
+      ssl.truststore.password: ""
+      ssl.keystore.location: ""
+      ssl.keystore.password: ""
+
+      schema.registry.ssl.truststore.location: ""
+      schema.registry.ssl.truststore.password: ""
+      schema.registry.ssl.keystore.location: ""
+      schema.registry.ssl.keystore.password: ""
+
+      schema.registry.url: "mock://schema-registry"
+      specific.avro.reader: "true"
+      auto.register.schemas: true
+
+      spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema.registry.url: "mock://schema-registry"

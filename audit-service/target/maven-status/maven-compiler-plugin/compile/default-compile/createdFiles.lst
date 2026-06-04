@@ -1,0 +1,7 @@
+ru\mixaron\auditservice\AuditServiceApplication.class
+ru\mixaron\auditservice\config\KafkaConfig.class
+ru\mixaron\auditservice\service\AuditService.class
+ru\mixaron\auditservice\mapper\AuditMapper.class
+ru\mixaron\auditservice\model\AuditLog.class
+ru\mixaron\auditservice\model\AuditLog$AuditLogBuilder.class
+ru\mixaron\auditservice\repository\AuditRepository.class

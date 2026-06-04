@@ -1,0 +1,6 @@
+ru\mixaron\transactionservice\config\SecurityConfig.class
+ru\mixaron\transactionservice\controller\LoginController.class
+ru\mixaron\transactionservice\controller\TransactionController.class
+ru\mixaron\transactionservice\service\TransactionProducer.class
+ru\mixaron\transactionservice\TransactionServiceApplication.class
+ru\mixaron\transactionservice\dto\TransactionDTO.class

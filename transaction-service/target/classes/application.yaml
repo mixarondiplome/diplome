@@ -1,0 +1,45 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka:9093,kafka-2:9093,kafka-3:9093
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: OAUTHBEARER
+      sasl.oauthbearer.token.endpoint.url: https://keycloak:8443/realms/banking-realm/protocol/openid-connect/token
+      sasl.jaas.config: 'org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="transaction-service" clientSecret="**********" scope="email";'
+      sasl.login.callback.handler.class: org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
+      ssl.truststore.location: /app/certs/kafka.truststore.jks
+      ssl.truststore.password: confluent
+      ssl.keystore.location: /app/certs/kafka.keystore.jks
+      ssl.keystore.password: confluent
+      ssl.key.password: confluent
+      schema.registry.url: https://schema-registry:8081
+      schema.registry.ssl.truststore.location: /app/certs/kafka.truststore.jks
+      schema.registry.ssl.truststore.password: confluent
+      schema.registry.ssl.truststore.type: JKS
+    producer:
+      acks: all
+      retries: 5
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        retry.backoff.ms: 1000
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 1
+        schema.registry.url: https://schema-registry:8081
+        schema.registry.retry.attempts: 10
+        schema.registry.retry.backoff.ms: 1000
+        auto.register.schemas: true
+        use.latest.version: true
+        delivery.timeout.ms: 15000
+        request.timeout.ms: 5000
+  security:
+    user:
+      name: demo
+      password: demo123
+      roles: USER
+server:
+  port: 8083
+  servlet:
+    session:
+      cookie:
+        name: "TRANSACTION_SESSION"

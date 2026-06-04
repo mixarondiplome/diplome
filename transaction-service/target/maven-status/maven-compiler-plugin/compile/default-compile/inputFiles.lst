@@ -1,0 +1,6 @@
+D:\porjects\bank_microservices_without_security\transaction-service\src\main\java\ru\mixaron\transactionservice\config\SecurityConfig.java
+D:\porjects\bank_microservices_without_security\transaction-service\src\main\java\ru\mixaron\transactionservice\controller\LoginController.java
+D:\porjects\bank_microservices_without_security\transaction-service\src\main\java\ru\mixaron\transactionservice\controller\TransactionController.java
+D:\porjects\bank_microservices_without_security\transaction-service\src\main\java\ru\mixaron\transactionservice\dto\TransactionDTO.java
+D:\porjects\bank_microservices_without_security\transaction-service\src\main\java\ru\mixaron\transactionservice\service\TransactionProducer.java
+D:\porjects\bank_microservices_without_security\transaction-service\src\main\java\ru\mixaron\transactionservice\TransactionServiceApplication.java
