@@ -269,10 +269,9 @@ services:
 
   transaction-service:
     container_name: transaction-service
-    image: mixaron/transaction-service:latest
-    # build:
-    #   context: .
-    #   dockerfile: transaction-service/Dockerfile
+    build:
+      context: .
+      dockerfile: transaction-service/Dockerfile
     depends_on:
       schema-registry:
         condition: service_healthy
@@ -289,10 +288,9 @@ services:
 
   notification-service:
     container_name: notification-service
-    image: mixaron/notification-service:latest
-    # build:
-    #   context: .
-    #   dockerfile: notification-service/Dockerfile
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
     depends_on:
       schema-registry:
         condition: service_healthy
@@ -309,11 +307,10 @@ services:
         -Djavax.net.ssl.trustStorePassword=confluent
 
   audit-service:
+    build:
+      context: .
+      dockerfile: audit-service/Dockerfile
     container_name: audit-service
-    image: mixaron/audit-service:latest
-    # build:
-    #   context: .
-    #   dockerfile: audit-service/Dockerfile
     depends_on:
       schema-registry:
         condition: service_healthy
