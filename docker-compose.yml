@@ -221,9 +221,9 @@ services:
     entrypoint: [
       "bash","-c",
       "sleep 12;
-       /usr/bin/kafka-topics --create --topic transaction-events --partitions 8 --replication-factor 1 --config min.insync.replicas=2 --bootstrap-server kafka:9092 --command-config /etc/kafka/secrets/client-ssl.properties || true;
-       /usr/bin/kafka-topics --create --topic transaction-events.notification.DLT --partitions 8 --replication-factor 1 --config min.insync.replicas=2 --bootstrap-server kafka:9092 --command-config /etc/kafka/secrets/client-ssl.properties || true; 
-       /usr/bin/kafka-topics --create --topic transaction-events.audit.DLT --partitions 8 --replication-factor 1 --config min.insync.replicas=2 --bootstrap-server kafka:9092 --command-config /etc/kafka/secrets/client-ssl.properties || true; 
+       /usr/bin/kafka-topics --create --topic transaction-events --partitions 8 --replication-factor 1 --config min.insync.replicas=2 --bootstrap-server kafka:9093 --command-config /etc/kafka/secrets/client-ssl.properties || true;
+       /usr/bin/kafka-topics --create --topic transaction-events.notification.DLT --partitions 8 --replication-factor 1 --config min.insync.replicas=2 --bootstrap-server kafka:9093 --command-config /etc/kafka/secrets/client-ssl.properties || true; 
+       /usr/bin/kafka-topics --create --topic transaction-events.audit.DLT --partitions 8 --replication-factor 1 --config min.insync.replicas=2 --bootstrap-server kafka:9093 --command-config /etc/kafka/secrets/client-ssl.properties || true; 
        echo 'topics created';"
     ]
     volumes:
@@ -351,7 +351,7 @@ services:
 #      - ./certs:/etc/kafka/secrets:ro
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9093
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9095
 
       KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL: PLAINTEXT
 #      KAFKA_CLUSTERS_0_PROPERTIES_SASL_MECHANISM: OAUTHBEARER
