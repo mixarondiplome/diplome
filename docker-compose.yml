@@ -347,8 +347,8 @@ services:
         condition: service_healthy
     ports:
       - "8086:8080"
-#    volumes:
-#      - ./certs:/etc/kafka/secrets:ro
+    volumes:
+      - ./certs:/etc/kafka/secrets:ro
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9095
