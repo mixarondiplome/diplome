@@ -281,7 +281,7 @@ services:
       start_period: 60s
 
   transaction-service:
-    image: mixaron/notification-service:latest
+    image: mixaron/transaction-service:latest
     container_name: transaction-service
 #    build:
 #      context: .
